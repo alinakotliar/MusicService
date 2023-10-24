@@ -2,40 +2,40 @@ package org.example.services;
 
 import io.restassured.response.ValidatableResponse;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import static io.restassured.RestAssured.given;
 
 public class PlaylistService {
     private static final String BASE_URL = "http://localhost:8888/api/playlists";
 
-    public ValidatableResponse createPlaylist(String playlistDetails) {
+    public ValidatableResponse createPlaylist(Playlist playlist) {
         return given()
                 .contentType("application/json")
-                .body(playlistDetails)
+                .body(playlist)
                 .when()
                 .post(BASE_URL)
                 .then();
     }
 
-    public ValidatableResponse updatePlaylist(int playlistId, String updatedDetails) {
+    public ValidatableResponse updatePlaylist(int playlistId, Playlist updatedPlaylist) {
         String updatePlaylistEndpoint = BASE_URL + "/" + playlistId;
+
         return given()
                 .contentType("application/json")
-                .body(updatedDetails)
+                .body(updatedPlaylist)
                 .when()
                 .put(updatePlaylistEndpoint)
                 .then();
     }
 
-    public ValidatableResponse deletePlaylist(int playlistId) {
-        String deletePlaylistEndpoint = BASE_URL + "/" + playlistId;
-        return given()
-                .when()
-                .delete(deletePlaylistEndpoint)
-                .then();
-    }
-
     public ValidatableResponse getPlaylist(int playlistId) {
         String retrievePlaylistEndpoint = BASE_URL + "/" + playlistId;
+
         return given()
                 .when()
                 .get(retrievePlaylistEndpoint)
@@ -43,28 +43,35 @@ public class PlaylistService {
     }
 
     public ValidatableResponse addTrackToPlaylist(int playlistId, int trackId) {
-        String addTracksEndpoint = BASE_URL + "/" + playlistId + "/tracks/add";
-        String tracksToAdd = "{\n" +
-                "   \"trackId\": " + trackId + "\n" +
-                "}";
+        String addTrackEndpoint = BASE_URL + "/" + playlistId + "/tracks/add";
+        String trackToAdd = "{\"trackId\": " + trackId + "}";
+
         return given()
                 .contentType("application/json")
-                .body(tracksToAdd)
+                .body(trackToAdd)
                 .when()
-                .post(addTracksEndpoint)
+                .post(addTrackEndpoint)
                 .then();
     }
 
     public ValidatableResponse removeTrackFromPlaylist(int playlistId, int trackId) {
         String removeTrackEndpoint = BASE_URL + "/" + playlistId + "/tracks/remove";
-        String trackToRemove = "{\n" +
-                "   \"trackId\": " + trackId + "\n" +
-                "}";
+        String trackToRemove = "{\"trackId\": " + trackId + "}";
+
         return given()
                 .contentType("application/json")
                 .body(trackToRemove)
                 .when()
                 .delete(removeTrackEndpoint)
+                .then();
+    }
+
+    public ValidatableResponse deletePlaylist(int playlistId) {
+        String deletePlaylistEndpoint = BASE_URL + "/" + playlistId;
+
+        return given()
+                .when()
+                .delete(deletePlaylistEndpoint)
                 .then();
     }
 }
