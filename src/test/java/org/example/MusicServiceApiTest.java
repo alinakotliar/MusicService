@@ -60,62 +60,69 @@ public class MusicServiceApiTest{
 
         int createdPlaylistId = createResponse.extract().path("id");
 
-        // Список добавляемых треков
-        List<Integer> trackIdsToAdd = Arrays.asList(1, 2, 3);
+        // List of tracks to add
+        List<Integer> trackIdsToAdd = Arrays.asList(1, 2, 3, 4);
 
-        // Добавление треков в плейлист
+        // Adding tracks to playlist
         for (int trackId : trackIdsToAdd) {
             ValidatableResponse addTrackResponse = playlistService.addTrackToPlaylist(createdPlaylistId, trackId);
             addTrackResponse.assertThat().statusCode(200);
         }
 
-        // Проверка, что треки добавлены в плейлист
+        // Check that tracks are added to playlist
         ValidatableResponse retrieveResponse = playlistService.getPlaylist(createdPlaylistId);
         retrieveResponse.assertThat().statusCode(200);
 
-        // Получение списка треков из ответа
+        // Getting the Track List from the response
         List<Integer> trackIdsInPlaylist = retrieveResponse.extract().path("tracks.id");
 
         for (int trackId : trackIdsToAdd) {
-            // Проверка, что треки добавлены в плейлист
+            // Check that tracks are added to playlist
             Assert.assertTrue(trackIdsInPlaylist.contains(trackId), "Track " + trackId + " should be in the playlist.");
         }
     }
 
     @Test
     public void removeTrackFromPlaylistAndVerify() {
-        Playlist playlist = new Playlist("My favorite playlist", true, "My Playlist", 1);
+        // Create a new playlist for existing users.
+        List<Integer> trackIds = new ArrayList<>(Arrays.asList(1, 2, 3, 4)); // List of tracks
 
-        ValidatableResponse createResponse = playlistService.createPlaylist(playlist);
-        createResponse.assertThat().statusCode(201);
+        int createdPlaylistId = createPlaylistAndAddTracks(trackIds);
 
-        int createdPlaylistId = createResponse.extract().path("id");
+        // Remove one of the tracks from the list
+        int trackToRemove = 2;
+        ValidatableResponse removeTrackResponse = playlistService.removeTrackFromPlaylist(createdPlaylistId, trackToRemove);
+        removeTrackResponse.assertThat().statusCode(200);
 
-        // Список треков, которые будут добавлены и затем удалены
-        List<Integer> trackIdsToAddAndRemove = Arrays.asList(1, 2, 3);
-
-        // Добавление треков в плейлист
-        for (int trackId : trackIdsToAddAndRemove) {
-            ValidatableResponse addTrackResponse = playlistService.addTrackToPlaylist(createdPlaylistId, trackId);
-            addTrackResponse.assertThat().statusCode(200);
-        }
-
-        // Удаление треков из плейлиста
-        for (int trackId : trackIdsToAddAndRemove) {
-            ValidatableResponse removeTrackResponse = playlistService.removeTrackFromPlaylist(createdPlaylistId, trackId);
-            removeTrackResponse.assertThat().statusCode(200);
-        }
-
-        // Проверка, что треки успешно удалены из плейлиста
+        // Make sure the track is removed
         ValidatableResponse retrieveResponse = playlistService.getPlaylist(createdPlaylistId);
         retrieveResponse.assertThat().statusCode(200);
 
-        // Получение списка треков из ответа
+        // retrieve list of tracks from response
         List<Integer> trackIdsInPlaylist = retrieveResponse.extract().path("tracks.id");
 
-        for (int trackId : trackIdsToAddAndRemove) {
-            // Проверка, что треки удалены из плейлиста
-            Assert.assertFalse(trackIdsInPlaylist.contains(trackId), "Track " + trackId + " should not be in the playlist.");
+        //response track is NOT present, the playlist could be retrieved from the endpoint and DOESN’T contain the removed track.
+        Assert.assertFalse(trackIdsInPlaylist.contains(trackToRemove), "Track " + trackToRemove + " should not be in the playlist.");
+    }
+
+    // Helper method for creating and adding tracks to playlist
+    private int createPlaylistAndAddTracks(List<Integer> trackIds) {
+        Playlist playlist = new Playlist("My favorite playlist", true, "My Playlist", 1);
+        ValidatableResponse createResponse = playlistService.createPlaylist(playlist);
+        createResponse.assertThat().statusCode(201);
+        int createdPlaylistId = createResponse.extract().path("id");
+
+        // Add tracks to playlist
+        addTracksToPlaylist(createdPlaylistId, trackIds);
+
+        return createdPlaylistId;
+    }
+
+
+    private void addTracksToPlaylist(int playlistId, List<Integer> trackIds) {
+        for (int trackId : trackIds) {
+            ValidatableResponse addTrackResponse = playlistService.addTrackToPlaylist(playlistId, trackId);
+            addTrackResponse.assertThat().statusCode(200);
         }
     }
 
